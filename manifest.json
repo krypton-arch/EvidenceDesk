@@ -10,7 +10,8 @@
   "host_permissions": [
     "*://*.twitter.com/*",
     "*://x.com/*",
-    "http://localhost:8000/*"
+    "http://localhost:8000/*",
+    "https://*/*"
   ],
   "background": {
     "service_worker": "background.js"
@@ -18,7 +19,7 @@
   "content_scripts": [
     {
       "matches": ["*://*.twitter.com/*", "*://x.com/*"],
-      "js": ["content_script.js"],
+      "js": ["config.js", "content_script.js"],
       "run_at": "document_idle"
     }
   ],

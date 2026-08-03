@@ -614,7 +614,7 @@ function createDashboard() {
   body.appendChild(whyChanged);
 
   const dashboardLink = document.createElement('a');
-  dashboardLink.href = 'http://localhost:8000';
+  dashboardLink.href = CONFIG.API_BASE_URL;
   dashboardLink.target = '_blank';
   dashboardLink.textContent = '📊 Open Dashboard';
   dashboardLink.style.cssText = 'display: block; text-align: center; margin-top: 12px; padding: 8px; background: rgba(168, 85, 247, 0.15); border: 1px solid rgba(168, 85, 247, 0.25); border-radius: 8px; color: #a855f7; text-decoration: none; font-size: 11px; font-weight: 600; letter-spacing: 0.5px; transition: background 0.2s;';

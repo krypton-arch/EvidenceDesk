@@ -1,3 +1,4 @@
+importScripts('config.js');
 let companionCapturesThisSession = 0;
 let companionLastEventAt = null;
 
@@ -5,7 +6,7 @@ async function getCompanionStatus() {
   try {
     const controller = new AbortController();
     const timeout = setTimeout(() => controller.abort(), 2500);
-    const response = await fetch('http://localhost:8000/api/feed', { signal: controller.signal });
+    const response = await fetch(CONFIG.API_BASE_URL + '/api/feed', { signal: controller.signal });
     clearTimeout(timeout);
     if (!response.ok) throw new Error(`HTTP ${response.status}`);
     return {
@@ -19,7 +20,7 @@ async function getCompanionStatus() {
 }
 
 function deliverCapture(payload) {
-  fetch('http://localhost:8000/api/capture', {
+  fetch(CONFIG.API_BASE_URL + '/api/capture', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(payload),
