@@ -1,8 +1,8 @@
-# 📊 Evidence Desk
+# Evidence Desk
 
 Evidence Desk (formerly Social Media Bias Auditor) is a browser extension and analytical backend designed to bring transparency and critical analysis to your social media consumption. By auditing the news sources in your Twitter/X feed against a massive 4-corpus fused dataset, Evidence Desk gives you a real-time, objective look at your information diet.
 
-## ✨ Key Features
+## Key Features
 
 ### 1. In-Feed Bias Detection
 The Chrome extension seamlessly parses links and handles as you scroll, checking them against a proprietary fused dataset combining:
@@ -31,14 +31,14 @@ A statistical model tracks the variance of the bias scores you are exposed to.
 
 ---
 
-## 🏗️ Architecture
+## Architecture
 
 - **Client:** A lightweight Manifest V3 Chrome Extension (Vanilla JavaScript). It handles DOM parsing (skipping known URL shorteners like `t.co`, `bit.ly`) and sends capture signals to the backend.
 - **Backend:** A fast, asynchronous API built with **Python** and **FastAPI**. It handles state management, Google News alternate coverage lookups, and clustering logic.
 
 ---
 
-## 🚀 Getting Started
+## Getting Started
 
 ### 1. Deploying the Backend (Production)
 The repository is pre-configured for automated deployment on **Render** (via `render.yaml`) or **Heroku/Railway** (via `Procfile`).
@@ -64,7 +64,7 @@ The repository is pre-configured for automated deployment on **Render** (via `re
 
 ---
 
-## 🛠️ Local Development
+## Local Development
 
 If you want to run the backend locally instead of on a cloud provider:
 
@@ -86,7 +86,7 @@ Then, ensure your `config.js` is set to `http://localhost:8000`.
 
 ---
 
-## 🧪 Testing
+## Testing
 The backend includes a comprehensive test suite that populates the dashboard with realistic story clusters (Immigration, Federal Reserve, Tech/AI, Climate) to verify all features.
 
 ```bash
