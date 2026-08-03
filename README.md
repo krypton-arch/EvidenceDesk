@@ -86,7 +86,7 @@ Then, ensure your `config.js` is set to `http://localhost:8000`.
 
 ---
 
-## Testing
+## Testing & Artifact Evaluation
 The backend includes a comprehensive test suite that populates the dashboard with realistic story clusters (Immigration, Federal Reserve, Tech/AI, Climate) to verify all features.
 
 ```bash
@@ -94,3 +94,16 @@ cd backend
 python test_evidence_desk.py
 ```
 *(Note: Ensure your local or remote server is running before executing the test script. It will automatically call the `/api/reset` endpoint to clear previous session data.)*
+
+### Reproducing Paper Results
+To reproduce the tables and figures from the "Real-Scale Evaluation" and "Longitudinal Resource Profiling" sections of the paper, we provide a unified reproducibility script.
+
+1. Ensure Python dependencies are installed.
+2. From the root directory, run:
+```bash
+./reproduce.sh
+```
+This script will:
+- Generate a synthetic dataset of 250 captures simulating a continuous browsing session (`backend/scripts/generate_evaluation_dataset.py`).
+- Run the companion service evaluation and print the latency percentiles and clustering metrics (`backend/scripts/evaluate_real_scale.py`).
+- Generate the memory usage profiling graph and save it as `profiling_graph.png` (`backend/scripts/generate_profiling_graph.py`).
