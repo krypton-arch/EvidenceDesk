@@ -73,7 +73,7 @@ Recent field experiments inform our system design by highlighting the complex in
 In designing a sociotechnical measurement tool, we distinguish between technological ``filter bubbles'' (algorithmic curation optimized for engagement) and sociological ``epistemic bubbles'' (where users actively discredit opposing sources entirely). Network homophily suggests that trust is transitive within clusters; digital environments accelerate this homophily by lowering the friction of network sorting. This research utilizes ``Institutional Trust'' as a proxy variable to computationally represent and bound these epistemic borders.
 
 \subsection{Positioning Against Existing Systems}
-Unlike commercial tools such as NewsGuard or Ad Fontes, which primarily provide static credibility badges, or traditional API-based research that relies on server-side logs, our framework offers real-time, privacy-preserving exposure auditing using multi-source data fusion. This addresses the specific technical gap of observing dynamic, in-the-wild ideological exposure without requiring platform cooperation, ensuring data remains entirely on the client side.
+Unlike commercial tools such as NewsGuard or Ad Fontes, which primarily provide static credibility badges, or traditional API-based research that relies on server-side logs, our framework offers real-time, privacy-preserving exposure auditing using multi-source data fusion. In terms of client-side engineering, our architecture shares operational similarities with content blockers (e.g., uBlock Origin \cite{hill2014ublock}), utilizing efficient DOM parsing and micro-task debouncing to achieve negligible rendering impact. Furthermore, while recent efforts have pushed computationally heavy natural language processing to the edge using client-side machine learning patterns (such as TensorFlow.js \cite{smilkov2019tensorflow} or WebAssembly (WASM) inference engines \cite{haas2017bringing}), Evidence Desk intentionally avoids these heavy runtime dependencies. By relying on $O(1)$ in-memory lookups rather than in-browser model inference, we achieve deterministic sub-millisecond latency that guarantees uninterrupted tracking on low-resource consumer hardware. This addresses the specific technical gap of observing dynamic, in-the-wild ideological exposure without requiring platform cooperation or imposing prohibitive performance overheads.
 
 % ══════════════════════════════════════════════════════════════════════════════
 % SECTION III — Empirical Analysis
@@ -369,26 +369,23 @@ To rigorously evaluate the system under stress, we performed several failure-mod
 \end{itemize}
 
 % ══════════════════════════════════════════════════════════════════════════════
-% SECTION XI — Discussion and Future Work
+% SECTION XI — Threat Model and Systems Limitations
 % ══════════════════════════════════════════════════════════════════════════════
 
-\section{Discussion and Future Work}
-The Evidence Desk system demonstrates that client-side ideological exposure auditing can be meaningfully extended with a lightweight companion service, without sacrificing the privacy-preserving properties of the original architecture. Several design decisions merit discussion.
+\section{Threat Model and Systems Limitations}
+The Evidence Desk system demonstrates that client-side ideological exposure auditing can be meaningfully extended with a lightweight companion service. However, continuous browser-native measurement introduces specific engineering constraints and failure modes that bound the system's operational viability.
 
-\subsection{Privacy Trade-offs in the Companion Model}
-The companion service represents a deliberate architectural trade-off. While the core rigidity score computes entirely within the browser, the alternate coverage pipeline necessarily transmits captured domains and tweet text to the companion server. In the current deployment, the companion server may run locally on the user's machine or on a hosted cloud service. Future work should explore end-to-end encryption or on-device alternate coverage retrieval to restore full client-side privacy in hosted deployments.
+\subsection{DOM Brittleness and UI Churn}
+A primary systems constraint is the structural brittleness of DOM-based feature extraction. Unlike formal APIs with versioned contracts, client-side scraping relies on ephemeral CSS selectors and HTML attributes (e.g., timestamp hyperlinks used for deterministically deduplicating elements). Frequent UI updates by platform engineers represent a direct threat to measurement stability, as unannounced DOM mutations can silently degrade or entirely halt the extraction pipeline. Maintaining high-fidelity auditing requires an active continuous-integration framework that periodically validates selector health against live platform builds.
+
+\subsection{CORS Constraints and Link Resolution}
+Cross-Origin Resource Sharing (CORS) policies fundamentally restrict the ability of a browser extension's content script to follow redirect chains transparently. This imposes a hard engineering limit on resolving URL shorteners (e.g., \texttt{bit.ly}). While our architecture successfully extracts the visible destination from platform-specific wrappers (like X's \texttt{t.co}), opaque external shorteners cannot be resolved client-side without violating CORS or blocking the main thread. Consequently, these domains must be ignored, leading to a minor but systematic undercounting of long-tail ideological exposure.
+
+\subsection{Companion Service Privacy and Trust Boundaries}
+The companion service represents a deliberate architectural trade-off that compromises the strict local-only execution boundary of the core extension. To achieve real-time alternate coverage retrieval without burdening the client with heavy search indexing, captured domains and semantic keywords are necessarily transmitted off-device. In a hosted deployment model, this transmission risks exposing user feed characteristics to the companion server, constituting a privacy threat. While the current system mitigates this through data minimization (discarding un-matched terms and avoiding persistent telemetry logging), future iterations must explore end-to-end encryption or fully local edge-compute pipelines (e.g., leveraging Web-compatible embedded models) to restore a zero-trust privacy posture.
 
 \subsection{Limitations of Keyword-Based Clustering}
-The Jaccard-overlap clustering algorithm is lightweight and effective for real-time grouping, but it cannot capture semantic similarity between headlines that use different vocabulary to describe the same event. Embedding-based clustering (e.g., using sentence transformers) would improve recall at the cost of significant computational overhead, which may be acceptable in a server-side context.
-
-\subsection{Corroboration vs. Truth}
-The verification status taxonomy explicitly avoids truth claims. ``Highly Verified'' indicates cross-partisan corroboration, not factual accuracy. A false claim reported across the ideological spectrum would receive a ``Highly Verified'' label. This is a deliberate design choice: the system measures \textit{epistemic coverage patterns}, not truth values. Future work could integrate structured claim-extraction and fact-checking APIs to complement the corroboration signal.
-
-\subsection{Ethical Considerations and Privacy}
-Client-side telemetry raises significant privacy concerns. This architecture was designed from the ground up to operate entirely locally, adhering strictly to the data minimization principles required by frameworks such as GDPR and CCPA. Lookups occur exclusively within the user's local execution environment; absolutely no browsing data, DOM elements, or behavioral telemetry is transmitted to external servers by the extension itself. The statistical models run offline within the browser's sandboxed environment, ensuring the application acts as a sovereign agent for the user rather than a data-harvesting node for the researcher.
-
-\subsection{Future Directions}
-Longitudinal deployment studies are needed to assess whether the Evidence Desk's transparency interventions influence user behavior. Additionally, the current system is specific to X/Twitter; extending the DOM scraping architecture to other platforms (Reddit, Facebook, YouTube) would require platform-specific content script adapters but could reuse the companion service infrastructure unchanged. Future work could also involve randomized controlled trials to assess whether UI interventions based on this framework alter affective polarization.
+As an engineering trade-off for real-time responsiveness, the Jaccard-overlap clustering algorithm avoids heavy semantic embedding. While this guarantees sub-millisecond execution, it limits the system's recall when differing political factions use completely divergent vocabulary to describe the same event.
 
 % ══════════════════════════════════════════════════════════════════════════════
 % SECTION XII — Conclusion
@@ -414,6 +411,9 @@ End-to-end evaluation demonstrated correct story clustering, functional corrobor
 \bibitem{b10} S. Riedel, B. Augenstein, G. P. Spithourakis, and S. Riedel, ``A simple but tough-to-beat baseline for the Fake News Challenge stance detection task,'' \textit{arXiv preprint arXiv:1707.03264}, 2017.
 \bibitem{b11} M. Flaxman, S. Goel, and J. M. Rao, ``Filter bubbles, echo chambers, and online news consumption,'' \textit{Public Opinion Quarterly}, vol. 80, no. S1, pp. 298--320, 2016.
 \bibitem{b12} E. Pariser, \textit{The Filter Bubble: What the Internet Is Hiding from You}. Penguin Press, 2011.
+\bibitem{hill2014ublock} R. Hill, ``uBlock Origin,'' \textit{GitHub repository}, 2014. [Online]. Available: \url{https://github.com/gorhill/uBlock}
+\bibitem{smilkov2019tensorflow} D. Smilkov, N. Thorat, B. Assis, et al., ``TensorFlow.js: Machine learning for the web and beyond,'' in \textit{Proceedings of the 2nd SysML Conference}, 2019.
+\bibitem{haas2017bringing} A. Haas, A. Rossberg, D. L. Schuff, et al., ``Bringing the web up to speed with WebAssembly,'' in \textit{Proceedings of the 38th ACM SIGPLAN Conference on Programming Language Design and Implementation (PLDI)}, 2017.
 \end{thebibliography}
 
 \end{document}
