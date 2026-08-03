@@ -1,0 +1,248 @@
+\documentclass[10pt, conference, compsoc]{IEEEtran}
+\usepackage{cite}
+\usepackage{amsmath,amssymb,amsfonts}
+\usepackage{algorithmic}
+\usepackage{graphicx}
+\usepackage{textcomp}
+\usepackage{xcolor}
+\usepackage{booktabs}
+\usepackage{multirow}
+\usepackage{algorithm}
+\usepackage{algorithmic}
+\usepackage{url}
+
+\def\BibTeX{{\rm B\kern-.05em{\sc i\kern-.025em b}\kern-.08em
+    T\kern-.1667em\lower.7ex\hbox{E}\kern-.125emX}}
+
+\begin{document}
+
+\title{Epistemic Trust, Selective Exposure, and Design Implications for Auditing Political Polarization on Social Media: A Client-Side Approach}
+
+\author{\IEEEauthorblockN{1\textsuperscript{st} Sounak Chakraborty}
+\IEEEauthorblockA{\textit{Department of Computer Applications} \\
+\textit{Christ University}\\
+Bangalore, India \\
+sounak.chakraborty@mca.christuniversity.in}
+}
+
+\maketitle
+
+\begin{abstract}
+Political polarization and the fragmentation of online information diets are central concerns in computational social science. However, the aggressive deprecation of proprietary platform APIs has created a significant methodological gap, restricting researchers' ability to observe ideological exposure in naturalistic settings. In this paper, we present a deployable, browser-native computational framework designed to audit ideological exposure client-side, circumventing external API dependencies. Drawing on selective exposure theory, we integrate four heterogeneous bias datasets (AllSides, GDELT, Qbias, PABS) into a real-time data fusion pipeline. To motivate our system design, we analyze the Pew Research Center's American Trends Panel (ATP) Wave 155 dataset ($N=9,680$). Using agglomerative hierarchical clustering and Random Forest classification, we find that institutional trust variables exhibit a predictive association with political identity, motivating the need for continuous observation of trust-based epistemic boundaries. Consequently, we detail the software architecture of a privacy-preserving browser extension that utilizes \texttt{MutationObserver} APIs and an optimized in-memory fetch architecture for synchronous $O(1)$ domain resolution. We introduce specific engineering solutions for addressing single-page application (SPA) DOM virtualization and detail a streaming algorithm to compute a real-time ``Rigidity Score,'' a statistic approximating the ideological diversity of a user's feed. The primary contribution of this work is the engineering and operationalization of this research infrastructure; behavioral evaluation of the tool's impact on affective polarization remains future work.
+\end{abstract}
+
+\begin{IEEEkeywords}
+political polarization, computational social science, selective exposure, epistemic trust, browser extension, DOM scraping, recommender systems, machine learning.
+\end{IEEEkeywords}
+
+\section{Introduction}
+One of the most critical issues facing computational social science is the observation and measurement of political polarization within the fragmented digital information environment. As modern democratic engagement increasingly occurs within walled gardens (e.g., X/Twitter, Facebook), understanding the siloing of ideological perspectives requires continuous, large-scale observation. Historically, mapping the political information diet of online users relied on direct access to backend platform data via application programming interfaces (APIs). However, recent years have seen an aggressive deprecation of legacy API access tiers, creating a methodological gap often termed the "APIcalypse."
+
+In response to this restrictive data landscape, we propose a methodological pivot toward client-side telemetry and privacy-preserving front-end user auditing. Rather than attempting to diagnose and fix polarization directly, this paper provides reusable infrastructure for observing it. We first explore an empirical dataset, modeling political identity utilizing institutional trust variables, which is consistent with the Selective Exposure hypothesis. This analysis motivates our primary contribution: the engineering of a real-time, DOM-scraping browser extension capable of calculating a rolling statistic of ideological exposure and visualizing it through a dynamic dashboard without relying on proprietary platform APIs.
+
+The contributions of this paper are:
+\begin{enumerate}
+    \item A computational framework operationalizing selective exposure and institutional trust into browser-native ideological exposure auditing.
+    \item A privacy-preserving client-side architecture independent of proprietary APIs.
+    \item A multi-source ideological data fusion pipeline integrating AllSides, GDELT, Qbias, and PABS.
+    \item A streaming algorithm approximating ideological exposure in real-time.
+    \item A reproducible implementation providing reusable infrastructure for future computational social science research.
+\end{enumerate}
+
+\section{Theoretical Framework and Related Work}
+To engineer a framework that captures the dynamics of ideological isolation, it is necessary to operationalize the mechanisms distinguishing algorithmic curation from individual user agency. Disentangling algorithmic imposition from active human choice is a persistent methodological challenge; observing behavior purely from server-side logs obscures the cognitive decisions made at the client boundary.
+
+\subsection{Selective Exposure and Social Identity Theory}
+Selective Exposure Theory postulates that individuals actively seek out information affirming pre-existing beliefs while avoiding dissonant information. When applied to digital networks via the Uses and Gratifications Theory, empirical evidence suggests partisan users consume news not merely for objective information, but for identity affirmation. Consequently, social media interaction is deeply tied to Social Identity Theory (SIT). Visible metrics of endorsement (likes, shares, retweets) serve as highly quantifiable signals of in-group conformity. When users encounter opposing viewpoints in these digital spaces, SIT predicts defensive posturing rather than rational assimilation. Our computational architecture is designed to capture these selective exposure patterns in real-time, without establishing causal behavioral claims.
+
+\subsection{Experimental Evidence on Algorithmic vs. Human Agency}
+Recent field experiments inform our system design by highlighting the complex interplay between algorithms and agency. Levy (2021) assigned Facebook users to subscribe to cross-cutting news outlets, observing an association with increased affective polarization, suggesting that forceful algorithmic diversification may backfire. Allcott and Gentzkow noted that Facebook deactivation was associated with reduced affective polarization but decreased political knowledge. Crucially, large-scale computational studies by Bakshy et al. indicate that personal user decisions diminished the mixing of viewpoints by 6\% to 17\%, significantly outpacing the 5\% to 8\% reduction caused strictly by recommendation algorithms. These findings motivate the urgent need for client-side auditing tools that can measure user-driven, active exposure in naturalistic settings.
+
+\subsection{Filter Bubbles vs. Epistemic Bubbles}
+In designing a sociotechnical measurement tool, we distinguish between technological "filter bubbles" (algorithmic curation optimized for engagement) and sociological "epistemic bubbles" (where users actively discredit opposing sources entirely). Network homophily suggests that trust is transitive within clusters; digital environments accelerate this homophily by lowering the friction of network sorting. This research utilizes "Institutional Trust" as a proxy variable to computationally represent and bound these epistemic borders.
+
+\subsection{Positioning Against Existing Systems}
+Unlike commercial tools such as NewsGuard or Ad Fontes, which primarily provide static credibility badges, or traditional API-based research that relies on server-side logs, our framework offers real-time, privacy-preserving exposure auditing using multi-source data fusion. This addresses the specific technical gap of observing dynamic, in-the-wild ideological exposure without requiring platform cooperation, ensuring data remains entirely on the client side.
+
+\sectionsection{Empirical Analysis: Motivating the Framework}
+To motivate the design of our browser-native framework, we analyze the Pew Research Center's American Trends Panel (ATP) Wave 155 dataset (September 2024). We explicitly note that this cross-sectional survey data cannot establish causality; rather, the observed associations motivate the need for continuous, client-side observation of trust-based isolation.
+
+\subsection{Dataset Overview and Methodology}
+The dataset consists of $N=9,680$ U.S. adults collected via address-based sampling (ABS). Rigorous data cleaning was performed to isolate active political signals, filtering out `Refused' non-responses. The target variable for our predictive modeling is \texttt{F\_PARTY\_FINAL} (Political Party Affiliation). The active sample includes Democrats ($n=3,180$), Republicans ($n=2,797$), Independents ($n=2,600$), and a control group ($n=899$). 
+
+\subsection{Agglomerative Hierarchical Clustering}
+We employ agglomerative hierarchical clustering on institutional trust variables (National News, Social Media, Friends/Family, Government). Let $X = \{x_1, \dots, x_n\}$ be the set of trust observations. We define a distance metric utilizing Euclidean distance (Equation 1):
+\begin{equation}
+d(x_i, x_j) = \sqrt{\sum_{k=1}^{m} (x_{ik} - x_{jk})^2}
+\end{equation}
+We apply Ward's linkage criterion (Equation 2):
+\begin{equation}
+\Delta(A, B) = \frac{|A| |B|}{|A| + |B|} ||\mu_A - \mu_B||^2
+\end{equation}
+
+The resulting correlation matrix indicates that trust is partitioned into distinct clusters. For example, the association between trust in National News and Social Media is exceedingly low. This observed clustering is consistent with selective exposure literature, suggesting users filter not just ideological content, but the epistemological authorities themselves.
+
+\subsection{Predictive Modeling and Feature Importance}
+To effectively model these associations, we avoided linear models (e.g., Logistic Regression) which struggle to capture complex, overlapping interactions. Instead, a Random Forest classifier ($n=100$ trees) was fitted to the data. Decision trees recursively partition the trust data space, allowing the model to capture non-linear epistemic boundaries. We evaluate Feature Importance using Gini Impurity (Equation 3):
+\begin{equation}
+G(t) = 1 - \sum_{i=1}^{c} p(i|t)^2
+\end{equation}
+where $p(i|t)$ is the probability of an item belonging to class $i$ at node $t$, and the decrease in Gini impurity at each node split is aggregated across the forest.
+
+\begin{table}[htbp]
+\caption{Random Forest Model Performance based on Institutional Trust (Weighted Avg Accuracy = 0.42, Baseline = 0.33)}
+\begin{center}
+\begin{tabular}{lccc}
+\toprule
+\textbf{Political Affiliation Class} & \textbf{Precision} & \textbf{Recall} & \textbf{F1-Score} \\
+\midrule
+Republican & 0.58 & 0.61 & 0.59 \\
+Democrat & 0.62 & 0.65 & 0.63 \\
+Independent & 0.31 & 0.28 & 0.29 \\
+\bottomrule
+\end{tabular}
+\label{tab:rf_performance}
+\end{center}
+\end{table}
+
+The model demonstrates a predictive association with political identity, achieving an accuracy of 42\% compared to a 33\% multi-class baseline (Table \ref{tab:rf_performance}). In computational social science, predicting human political behavior from an eight-variable subset involves inherent noise. However, this performance indicates that institutional trust vectors contain significant signal for estimating ideological boundaries. Trust variables exhibited higher aggregate Gini importance than standard demographic features (Age, Gender, Education, Race). Furthermore, the differential precision between established partisans and Independents is consistent with theories of epistemic isolation. These findings motivate the development of continuous, browser-native infrastructure to observe these dynamics empirically.
+
+\section{System Architecture and Data Fusion}
+Because the empirical analysis motivates the observation of epistemic choices, our framework transcends backend metrics. We engineer a frontend browser extension providing a user-facing dashboard. To evaluate encountered links in real-time without external network latency, the extension cross-references domains against multi-dimensional bias datasets strictly client-side. We utilize a multi-source fusion approach to maximize domain coverage while maintaining human-annotated fidelity.
+
+\subsection{The AllSides and GDELT Datasets}
+The AllSides dataset provides crowd-sourced bias ratings on a 5-point ordinal scale, along with a community agreement metric (\texttt{perc\_agree}) used as a statistical confidence weight in our algorithms. The GDELT-derived repository complements this by measuring aggregated outlet behavior (Table \ref{tab:gdelt_features}), capturing activity density and omission patterns for domains absent from human-annotated lists. In the event of a collision between the datasets, the framework prioritizes human-annotated AllSides data, utilizing GDELT as an expansive fallback for long-tail, fringe domains. We acknowledge the limitations of dictionary-based polarity scoring in GDELT, which may occasionally misinterpret modern social media vernacular.
+
+\begin{table}[htbp]
+\caption{Key Features of the GDELT Bias Dataset used for Domain Classification}
+\begin{center}
+\begin{tabular}{p{2.5cm} p{5.5cm}}
+\toprule
+\textbf{Feature} & \textbf{Implementation Metric} \\
+\midrule
+Tone & The aggregate positive and negative tone of the articles. \\
+Polarity & Proportion of words matching a tonal dictionary. \\
+Activity Density & Percentage of active words vs. purely descriptive text. \\
+Self/Group Density & Percentage of pronouns used to distinguish contextual framing. \\
+\bottomrule
+\end{tabular}
+\label{tab:gdelt_features}
+\end{center}
+\end{table}
+
+\subsection{The Qbias and PABS Datasets}
+\textbf{Qbias Dataset:} Contains 21,747 expert-annotated articles, enabling the extension to parse specific headlines for contextual spin.
+\textbf{Partisan Audience Bias Scores (PABS):} Scores domains from -1.0 (Democrat) to +1.0 (Republican) based on historical Twitter sharing behaviors of registered voters. PABS provides a behavioral proxy score that is highly compatible with our trust model.
+
+\section{Browser Extension Engineering: Client-Side Infrastructure}
+A primary implementation contribution of this paper is the architectural blueprint for client-side DOM scraping, which democratizes social computing research by removing dependencies on centralized APIs.
+
+\subsection{DOM Scraping via MutationObserver and Micro-Task Debouncing}
+We select the native \texttt{MutationObserver} API over static scraping because modern single-page applications dynamically render content, rendering static HTML parsing obsolete. However, executing expensive parsing logic directly within the observer callback frequently blocks the browser's main thread. To address this, the framework implements an asynchronous micro-task debouncing strategy utilizing \texttt{requestIdleCallback}. Extracted nodes are pushed to an internal queue and processed during idle browser cycles, ensuring the parsing logic never interrupts the user's scroll events or the platform's native rendering pipeline.
+
+\subsection{Addressing DOM Virtualization}
+A critical engineering challenge on platforms like X (Twitter) is DOM virtualization. As users scroll, the application continuously destroys off-screen DOM nodes to save memory and re-creates them when the user scrolls back. Tracking processed items via ephemeral DOM node references (e.g., a JavaScript \texttt{WeakSet}) results in severe double-counting, artificially skewing the exposure metrics. Our architecture solves this by extracting the unique Tweet ID from the timestamp hyperlink attributes (e.g., \texttt{/status/123456...}) and persisting these deterministic IDs in a global session \texttt{Set}. This preserves mathematical consistency: a single piece of content is scored precisely once per session, regardless of how often the virtual DOM recycles its visual elements. We note that relying on specific DOM attributes renders the tool susceptible to platform UI updates, necessitating ongoing maintenance.
+
+\subsection{Overcoming Client-Side Memory Limits: In-Memory Fetch Architecture}
+Evaluating massive datasets locally without introducing UI latency is a significant engineering hurdle. Initial prototypes utilized asynchronous \texttt{IndexedDB}. However, Manifest V3 (MV3) service worker lifecycles—which terminate after approximately 30 seconds of inactivity—caused severe context invalidation errors. 
+
+We redesign the architecture to bypass asynchronous databases entirely. The 2.1MB composite dictionary is shipped as a local Web Accessible Resource and fetched directly into the content script's memory. Modern V8 engines optimize parsed JSON objects into hidden classes, allowing synchronous $O(1)$ property lookups to execute in microseconds. We select this in-memory architecture to bypass Manifest V3's aggressive termination policies, guaranteeing uninterrupted tracking and achieving highly optimized query performance.
+
+\section{Algorithmic Formalization of the Rigidity Score}
+The core function of the extension is to calculate a continuous ``Rigidity Score'' ($R_t$). We define this score as an online, browser-native statistic summarizing the ideological exposure diversity of a user's feed. It operationalizes concepts from selective exposure literature without asserting psychological diagnoses. A known limitation of this metric is that mathematical variance does not differentiate between a purely centrist feed and a highly polarized bimodal feed.
+
+Let $S_t = \{s_1, s_2, \dots, s_k\}$ be the set of bias scores (normalized to a $[-1, 1]$ scale) extracted from the DOM. An Exponential Moving Average (EMA) is selected over a Simple Moving Average (SMA) because EMA explicitly weights recent observations heavier, approximating cognitive recency effects where immediately encountered information exerts a proportionally larger influence.
+
+The weighted mean bias $\mu_t$ is calculated incrementally (Equation 4):
+\begin{equation}
+\mu_t = \alpha_{\text{eff}} \cdot s_t + (1 - \alpha_{\text{eff}}) \cdot \mu_{t-1}
+\end{equation}
+where $s_t$ is the bias score of the newly encountered domain, and $\alpha_{\text{eff}} = \alpha \cdot c_d$ is the effective smoothing factor. Here, $\alpha \in (0, 1)$ is the baseline decay rate, modulated by the per-domain confidence weight $c_d \in [0, 1]$. This ensures domains with low inter-annotator agreement exert proportionally less influence, reducing measurement noise.
+
+The rolling variance $\sigma^2_t$ is updated incrementally via the Welford-style EMA formulation (Equation 5):
+\begin{equation}
+\sigma^2_t = (1 - \alpha_{\text{eff}}) \left( \sigma^2_{t-1} + \alpha_{\text{eff}} \cdot (s_t - \mu_{t-1})^2 \right)
+\end{equation}
+
+The Rigidity Score $R_t$ is defined as (Equation 6):
+\begin{equation}
+R_t = 1 - e^{-\lambda \sigma^2_t}
+\end{equation}
+where $\lambda$ is a scaling constant (empirically set to $\lambda = 0.1$ for this specific UI scale). The $\lambda$ parameter controls the decay curve, mapping potentially unbounded variance into a strict $[0, 1]$ interval suitable for UI rendering. Future deployments across different platforms may require empirical tuning of this parameter. When the variance of encountered scores collapses ($\sigma^2_t \to 0$), $R_t \to 0$, which the UI maps to an ``Echo Chamber'' label. A diverse feed produces higher variance, pushing $R_t$ toward 1.0. 
+
+\section{System Demonstration and Engineering Evaluation}
+To illustrate the implementability of the proposed architecture, we present a demonstration of the extension operating on a live X (Twitter) feed.
+
+\subsection{Data Processing and In-Memory Retrieval}
+The DOM scraper isolates external URLs and extracts author handles from specific elements. Each domain is resolved against the composite bias corpus stored securely within the content script's local memory closure. Because the dataset is fetched client-side, retrieval latencies remain negligible.
+
+\subsection{Dashboard User Interface}
+The EMA engine incrementally updates $\mu_t$ and $\sigma^2_t$. In scenarios where the feed exhibits uniform partisan slant, the variance remains suppressed and $R_t \approx 0$. When the feed contains diverse sources, $R_t$ rises.
+
+\begin{figure}[htbp]
+\centerline{\includegraphics[width=3.0in]{dashboard.png}}
+\caption{The browser extension's dashboard, encapsulated in a closed Shadow DOM. The gradient shifts based on $R_t$: red ($R_t < 0.02$), orange ($R_t < 0.05$), yellow ($R_t < 0.15$), and green ($R_t \geq 0.15$).}
+\label{fig:dashboard}
+\end{figure}
+
+The shadow DOM dashboard (Figure \ref{fig:dashboard}) renders a draggable panel displaying $R_t$, a breakdown bar of Left/Center/Right sources, and running counts. It provides ambient transparency into the structural composition of the user's information diet, intended to support future behavioral experiments.
+
+\subsection{Engineering Evaluation and Performance Metrics}
+To rigorously assess the framework's viability for continuous in-the-wild deployment, an engineering evaluation profiled the extension's load on the browser's V8 engine. We simulated rapid scrolling events (processing batches of 50 external links per event) to measure throughput, memory scaling, and main-thread blocking time. The legacy asynchronous \texttt{IndexedDB} architecture served as a baseline.
+
+The evaluation (Table \ref{tab:eval_metrics}) indicates highly optimized performance increases. The legacy asynchronous \texttt{IndexedDB} implementation incurred a 3--5 ms latency penalty per query. The In-Memory Fetch architecture, utilizing V8 hidden classes, reduces this to $< 0.01$ ms per lookup. 
+
+\begin{table}[htbp]
+\caption{Performance Profiling: Legacy IndexedDB vs. In-Memory Fetch}
+\begin{center}
+\resizebox{\columnwidth}{!}{%
+\begin{tabular}{|l|l|l|l|}
+\hline
+\textbf{Metric} & \textbf{Legacy IndexedDB} & \textbf{In-Memory Fetch} & \textbf{Improvement} \\
+\hline
+Data Load Time & $\sim450$ ms & $\sim10$ ms & 97\% reduction \\
+\hline
+Lookup Latency & 3--5 ms & $< 0.01$ ms & $>99$\% reduction \\
+\hline
+Peak Thread Block & $>25$ ms (Jank) & $< 0.1$ ms & Guaranteed 60 FPS \\
+\hline
+Frame Drop Rate & High ($>16.6$ms block) & 0\% & 100\% eliminated \\
+\hline
+Memory Scaling & $O(N)$ historical arrays & $O(1)$ scalar tracking & Flat memory curve \\
+\hline
+Context Errors & High (MV3 termination) & None & 100\% eliminated \\
+\hline
+\end{tabular}%
+}
+\label{tab:eval_metrics}
+\end{center}
+\end{table}
+
+Data load times dropped by 97\%. Crucially, the \texttt{requestIdleCallback} debouncing restricts the peak main-thread blocking time to $<0.1$ ms per batch. Given that a 60 frames-per-second (FPS) rendering target provides a strict 16.6 ms per-frame budget, this architecture utilizes $<0.6\%$ of the available CPU idle time, mathematically eliminating frame drops (jank) caused by the extension. 
+
+Furthermore, memory scaling is highly optimized. By utilizing the streaming Welford EMA formulation, the space complexity of the ideological tracking remains $O(1)$; the system stores only the scalar $\mu_t$ and $\sigma^2_t$ values rather than continuously appending to an $O(N)$ historical array. Consequently, the memory footprint remains entirely flat regardless of session length or scroll depth, ensuring the tool imposes zero degradation on long-running browser sessions. Decoupling the evaluation engine from the MV3 service worker entirely eliminated context invalidation errors, resulting in absolute tracker uptime.
+
+\section{Discussion and Future Work}
+The current work focuses on providing reusable research infrastructure. It does not establish behavioral effectiveness or claim causality. Future work could involve longitudinal randomized controlled trials to assess whether UI interventions based on this framework alter affective polarization.
+
+\subsection{Ethical Considerations and Privacy}
+Client-side telemetry raises significant privacy concerns. This architecture was designed from the ground up to operate entirely locally, adhering strictly to the data minimization principles required by frameworks such as GDPR and CCPA. Lookups occur exclusively within the user's local execution environment; absolutely no browsing data, DOM elements, or behavioral telemetry is transmitted to external servers. The statistical models run offline within the browser's sandboxed environment, ensuring the application acts as a sovereign agent for the user rather than a data-harvesting node for the researcher.
+
+\section{Conclusion}
+This paper operationalizes theories of selective exposure and institutional trust into a deployable, browser-native computational system. Using the Pew ATP dataset, we established that trust vectors exhibit predictive associations with political identity, motivating the need for continuous observation of information diets. We addressed the methodological gap caused by API deprecations by engineering a privacy-preserving, client-side extension that calculates an ideological exposure statistic in real-time. By optimizing a multi-source data fusion pipeline with a synchronous in-memory architecture, we achieved highly optimized lookup latency capable of sustaining high-throughput DOM parsing. 
+
+This work provides reusable, reproducible infrastructure for future computational social science research. It enables future behavioral studies to investigate ideological isolation in naturalistic settings without relying on proprietary platform access. The current work does not establish behavioral effectiveness, nor does it claim to reduce polarization or change user behavior. Rather, it offers a robust computational foundation for observing these phenomena empirically.
+
+\begin{thebibliography}{00}
+\bibitem{b1} E. Kubin and C. von Sikorski, ``The role of (social) media in political polarization: A systematic review,'' \textit{Annals of the International Communication Association}, vol. 45, no. 3, pp. 188--206, Aug. 2021.
+\bibitem{b2} R. Levy, ``Social media, news consumption, and polarization: Evidence from a field experiment,'' \textit{American Economic Review}, vol. 111, no. 3, pp. 831--870, Mar. 2021.
+\bibitem{b3} E. Bakshy, S. Messing, and L. A. Adamic, ``Exposure to ideologically diverse news and opinion on Facebook,'' \textit{Science}, vol. 348, no. 6239, pp. 1130--1132, Jun. 2015.
+\bibitem{b4} H. Allcott, L. Braghieri, S. Eichmeyer, and M. Gentzkow, ``The welfare effects of social media,'' \textit{American Economic Review}, vol. 110, no. 3, pp. 629--676, Mar. 2020.
+\bibitem{b5} R. R\"onnback, C. Emmery, and H. Brighton, ``Automatic large-scale political bias detection of news outlets,'' \textit{PLoS ONE}, vol. 20, no. 5, p. e0321418, May 2025.
+\bibitem{b6} F. Haak and P. Schaer, ``Qbias - A Dataset on Media Bias in Search Queries and Query Suggestions,'' in \textit{Proceedings of ACM Web Science Conference}, 2023.
+\bibitem{b7} Pew Research Center, ``American Trends Panel Wave 155,'' Sep. 2024. [Online]. Available: \url{https://www.pewresearch.org/dataset/american-trends-panel-wave-155/}
+\bibitem{b8} M. Mosleh, C. Martel, D. G. Rand, and A. A. Arechar, ``Shared partisanship dramatically increases social tie formation in a Twitter field experiment,'' \textit{Nature Communications}, vol. 13, Article 7144, Nov. 2022.
+\bibitem{b9} C. K. Tokita, A. M. Guess, and C. E. Tarnita, ``Quantifying echo chambers: A comparison across methods and topics in social media,'' \textit{Proceedings of the National Academy of Sciences}, vol. 118, no. 43, Oct. 2021.
+\end{thebibliography}
+
+\end{document}

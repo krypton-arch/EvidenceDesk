@@ -1,0 +1,24 @@
+Testing GDELT Coverage Strategies...
+Error querying GDELT: 
+'Supreme Court strikes down Chevron, curt...' -> Full: 0, KW: 0
+Error querying GDELT: 
+'Fed keeps rates steady, signals only one...' -> Full: 0, KW: 0
+Error querying GDELT: Expecting value: line 1 column 1 (char 0)
+'Nvidia briefly becomes world's most valu...' -> Full: 0, KW: 0
+'Tesla shareholders approve Elon Musk's $...' -> Full: 0, KW: 0
+Error querying GDELT: Expecting value: line 1 column 1 (char 0)
+Error querying GDELT: Expecting value: line 1 column 1 (char 0)
+'EU tariffs on Chinese EVs to hit 38% in ...' -> Full: 0, KW: 0
+'Boeing CEO Dave Calhoun faces grueling S...' -> Full: 0, KW: 0
+Error querying GDELT: Expecting value: line 1 column 1 (char 0)
+'McDonald's ends AI drive-thru test with ...' -> Full: 0, KW: 0
+Error querying GDELT: Expecting value: line 1 column 1 (char 0)
+'Apple announces Apple Intelligence, its ...' -> Full: 0, KW: 0
+'Surgeon General calls for warning labels...' -> Full: 0, KW: 0
+'S&P 500 hits record high as tech rally c...' -> Full: 0, KW: 0
+
+Results over 10 headlines:
+Full Headline Hit Rate: 0/10
+Full Headline Avg Latency: 11740.3ms
+Keyword Hit Rate: 0/10
+Keyword Avg Latency: 11094.2ms

@@ -1,0 +1,9 @@
+{
+  "name": "social-bias-auditor",
+  "version": "2.0.0",
+  "private": true,
+  "scripts": {
+    "build:data": "node data_parser.js",
+    "test": "node --test test.js"
+  }
+}

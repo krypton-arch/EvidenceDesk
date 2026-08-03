@@ -1,0 +1,43 @@
+{
+  "manifest_version": 3,
+  "name": "Social Media Bias Auditor",
+  "version": "1.3.0",
+  "description": "Client-side auditing of social media feeds for political bias using a 4-corpus fused dataset (AllSides, PABS, GDELT, Q-Bias). Companion service provides alternate coverage and story clustering.",
+  "permissions": [
+    "storage",
+    "unlimitedStorage"
+  ],
+  "host_permissions": [
+    "*://*.twitter.com/*",
+    "*://x.com/*",
+    "http://localhost:8000/*"
+  ],
+  "background": {
+    "service_worker": "background.js"
+  },
+  "content_scripts": [
+    {
+      "matches": ["*://*.twitter.com/*", "*://x.com/*"],
+      "js": ["content_script.js"],
+      "run_at": "document_idle"
+    }
+  ],
+  "icons": {
+    "16": "icons/icon16.png",
+    "48": "icons/icon48.png",
+    "128": "icons/icon128.png"
+  },
+  "action": {
+    "default_title": "Social Media Bias Auditor",
+    "default_icon": {
+      "16": "icons/icon16.png",
+      "48": "icons/icon48.png"
+    }
+  },
+  "web_accessible_resources": [
+    {
+      "resources": ["bias_data.json"],
+      "matches": ["*://*.twitter.com/*", "*://x.com/*"]
+    }
+  ]
+}
