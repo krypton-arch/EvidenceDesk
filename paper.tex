@@ -28,7 +28,7 @@ sounak.chakraborty@mca.christuniversity.in}
 \maketitle
 
 \begin{abstract}
-Political polarization and the fragmentation of online information diets are central concerns in computational social science. However, the aggressive deprecation of proprietary platform APIs has created a significant methodological gap, restricting researchers' ability to observe ideological exposure in naturalistic settings. In this paper, we present Evidence Desk, a deployable, browser-native computational framework designed to audit ideological exposure client-side, circumventing external API dependencies. Drawing on selective exposure theory, we integrate four heterogeneous bias datasets (AllSides, GDELT, Qbias, PABS) into a real-time data fusion pipeline. To motivate our system design, we analyze the Pew Research Center's American Trends Panel (ATP) Wave 155 dataset ($N=9,680$). Using agglomerative hierarchical clustering and Random Forest classification, we find that institutional trust variables exhibit a predictive association with political identity, motivating the need for continuous observation of trust-based epistemic boundaries. Consequently, we detail the software architecture of a privacy-preserving browser extension that utilizes \texttt{MutationObserver} APIs and an optimized in-memory fetch architecture for synchronous $O(1)$ domain resolution, alongside a companion backend service that enriches each observation with bias-annotated alternate coverage retrieved from Google News RSS. We introduce a keyword-overlap story clustering algorithm and a cross-partisan corroboration spectrum that classifies stories into four verification tiers based on the ideological diversity of their coverage. The Evidence Desk dashboard synthesizes these outputs into an editorial-style interface featuring an Information Nutrition Label and a 2D Media Matrix. End-to-end evaluation demonstrates correct story clustering, functional corroboration classification, and sub-millisecond client-side lookup latency.
+The aggressive deprecation of proprietary platform APIs has created a significant methodological gap in computational social science, restricting researchers' ability to observe ideological exposure in naturalistic settings. In this paper, we present Evidence Desk, a deployable, browser-native computational framework designed to audit ideological exposure client-side, circumventing external API dependencies. Informed by a lightweight motivating analysis of institutional trust data from the Pew Research Center, we detail the software architecture of a privacy-preserving browser extension that utilizes \texttt{MutationObserver} APIs and an optimized in-memory fetch architecture for synchronous $O(1)$ domain resolution. We integrate four heterogeneous bias datasets (AllSides, GDELT, Qbias, PABS) into a real-time data fusion pipeline and introduce a companion backend service that enriches observations with bias-annotated alternate coverage from Google News RSS. Furthermore, we present a keyword-overlap story clustering algorithm and a cross-partisan corroboration spectrum that classifies stories into four verification tiers based on ideological diversity. The Evidence Desk dashboard synthesizes these outputs into an editorial-style interface featuring an Information Nutrition Label and a 2D Media Matrix. End-to-end evaluation demonstrates correct story clustering, functional corroboration classification, and sub-millisecond client-side lookup latency.
 \end{abstract}
 
 \begin{IEEEkeywords}
@@ -46,7 +46,6 @@ In response to this restrictive data landscape, we propose a methodological pivo
 
 The contributions of this paper are:
 \begin{enumerate}
-    \item A computational framework operationalizing selective exposure and institutional trust into browser-native ideological exposure auditing.
     \item A privacy-preserving client-side architecture independent of proprietary APIs.
     \item A multi-source ideological data fusion pipeline integrating AllSides, GDELT, Qbias, and PABS.
     \item A streaming algorithm approximating ideological exposure in real-time.
@@ -54,6 +53,7 @@ The contributions of this paper are:
     \item A cross-partisan corroboration spectrum classifying stories into four verification tiers based on the ideological diversity of their coverage.
     \item An Evidence Desk dashboard featuring an Information Nutrition Label and a 2D Media Matrix for multidimensional exposure analysis.
     \item A reproducible implementation providing reusable infrastructure for future computational social science research.
+    \item A lightweight motivating empirical analysis of institutional trust variables to frame the need for continuous browser-native ideological auditing.
 \end{enumerate}
 
 % ══════════════════════════════════════════════════════════════════════════════
@@ -80,29 +80,9 @@ Unlike commercial tools such as NewsGuard or Ad Fontes, which primarily provide 
 % ══════════════════════════════════════════════════════════════════════════════
 
 \section{Empirical Analysis: Motivating the Framework}
-To motivate the design of our browser-native framework, we analyze the Pew Research Center's American Trends Panel (ATP) Wave 155 dataset (September 2024). We explicitly note that this cross-sectional survey data cannot establish causality; rather, the observed associations motivate the need for continuous, client-side observation of trust-based isolation.
+To contextualize the need for our browser-native framework, we present a lightweight analysis of the Pew Research Center's American Trends Panel (ATP) Wave 155 dataset (September 2024, $N=9,680$).\footnote{Formal equations for agglomerative hierarchical clustering (utilizing Euclidean distance and Ward's linkage criterion) and Random Forest feature importance (Gini Impurity) utilized in this analysis are available in the supplementary material.} The dataset was cleaned to isolate active political signals, with a target variable of Political Party Affiliation across Democrats ($n=3,180$), Republicans ($n=2,797$), Independents ($n=2,600$), and a control group. 
 
-\subsection{Dataset Overview and Methodology}
-The dataset consists of $N=9,680$ U.S. adults collected via address-based sampling (ABS). Rigorous data cleaning was performed to isolate active political signals, filtering out `Refused' non-responses. The target variable for our predictive modeling is \texttt{F\_PARTY\_FINAL} (Political Party Affiliation). The active sample includes Democrats ($n=3,180$), Republicans ($n=2,797$), Independents ($n=2,600$), and a control group ($n=899$). 
-
-\subsection{Agglomerative Hierarchical Clustering}
-We employ agglomerative hierarchical clustering on institutional trust variables (National News, Social Media, Friends/Family, Government). Let $X = \{x_1, \dots, x_n\}$ be the set of trust observations. We define a distance metric utilizing Euclidean distance (Equation 1):
-\begin{equation}
-d(x_i, x_j) = \sqrt{\sum_{k=1}^{m} (x_{ik} - x_{jk})^2}
-\end{equation}
-We apply Ward's linkage criterion (Equation 2):
-\begin{equation}
-\Delta(A, B) = \frac{|A| |B|}{|A| + |B|} ||\mu_A - \mu_B||^2
-\end{equation}
-
-The resulting correlation matrix indicates that trust is partitioned into distinct clusters. For example, the association between trust in National News and Social Media is exceedingly low. This observed clustering is consistent with selective exposure literature, suggesting users filter not just ideological content, but the epistemological authorities themselves.
-
-\subsection{Predictive Modeling and Feature Importance}
-To effectively model these associations, we avoided linear models (e.g., Logistic Regression) which struggle to capture complex, overlapping interactions. Instead, a Random Forest classifier ($n=100$ trees) was fitted to the data. Decision trees recursively partition the trust data space, allowing the model to capture non-linear epistemic boundaries. We evaluate Feature Importance using Gini Impurity (Equation 3):
-\begin{equation}
-G(t) = 1 - \sum_{i=1}^{c} p(i|t)^2
-\end{equation}
-where $p(i|t)$ is the probability of an item belonging to class $i$ at node $t$, and the decrease in Gini impurity at each node split is aggregated across the forest.
+Employing agglomerative hierarchical clustering on institutional trust variables (National News, Social Media, Friends/Family, Government) revealed that trust is partitioned into distinct epistemic clusters. To model these associations, we fitted a Random Forest classifier ($n=100$ trees) to capture non-linear epistemic boundaries without assuming linear independence.
 
 \begin{table}[htbp]
 \caption{Random Forest Model Performance based on Institutional Trust (Weighted Avg Accuracy = 0.42, Baseline = 0.33)}
@@ -120,7 +100,7 @@ Independent & 0.31 & 0.28 & 0.29 \\
 \end{center}
 \end{table}
 
-The model demonstrates a predictive association with political identity, achieving an accuracy of 42\% compared to a 33\% multi-class baseline (Table \ref{tab:rf_performance}). In computational social science, predicting human political behavior from an eight-variable subset involves inherent noise. However, this performance indicates that institutional trust vectors contain significant signal for estimating ideological boundaries. Trust variables exhibited higher aggregate Gini importance than standard demographic features (Age, Gender, Education, Race). Furthermore, the differential precision between established partisans and Independents is consistent with theories of epistemic isolation. These findings motivate the development of continuous, browser-native infrastructure to observe these dynamics empirically.
+The model demonstrates a modest association with political identity, achieving an accuracy of 42\% compared to a 33\% multi-class baseline (Table \ref{tab:rf_performance}). While predicting political behavior from a subset of trust variables involves inherent noise, this performance indicates that institutional trust vectors contain sufficient signal to trace ideological boundaries. These findings motivate our core technical contribution: a continuous, browser-native infrastructure to observe epistemic choices and ideological exposure empirically.
 
 % ══════════════════════════════════════════════════════════════════════════════
 % SECTION IV — System Architecture and Data Fusion
